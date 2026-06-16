@@ -1,0 +1,31 @@
+{
+  "single_frame": {
+    "onnxruntime": {
+      "mean_ms": 2.581,
+      "p50_ms": 2.549,
+      "p95_ms": 2.97,
+      "p99_ms": 3.368
+    },
+    "pytorch": {
+      "mean_ms": 17.198,
+      "p50_ms": 16.809,
+      "p95_ms": 20.721,
+      "p99_ms": 22.314
+    }
+  },
+  "throughput": {
+    "batch_1": {
+      "p50_ms": 10.29,
+      "frames_per_sec": 97.2
+    },
+    "batch_8": {
+      "p50_ms": 39.225,
+      "frames_per_sec": 204.0
+    },
+    "batch_32": {
+      "p50_ms": 127.774,
+      "frames_per_sec": 250.4
+    }
+  },
+  "speedup_p50": 6.59
+}

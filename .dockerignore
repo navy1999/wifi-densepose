@@ -1,0 +1,31 @@
+# Keep the build context lean and the image clean.
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.github/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Frontend artifacts are rebuilt inside the image
+frontend/node_modules/
+frontend/dist/
+
+# Large local artifacts / data (model is rebuilt in the image's modelbuilder stage)
+checkpoints/
+data/
+*.pth
+*.onnx
+
+# Notebook + scratch (not needed at runtime)
+*.ipynb
+nb_*.txt
+demo/
+
+# Local env / editor
+.env
+.env.local
+.idea/
+.vscode/

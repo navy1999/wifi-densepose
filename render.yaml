@@ -1,0 +1,21 @@
+# Alternative free-tier deploy (Render). The web service free tier sleeps when
+# idle; DB/Redis are offloaded to Supabase/Upstash to stay within free limits.
+services:
+  - type: web
+    name: wifipose-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: WIFIPOSE_ENV
+        value: production
+      - key: WIFIPOSE_LOG_JSON
+        value: "true"
+      - key: WIFIPOSE_DATABASE_URL
+        sync: false   # paste Supabase/Neon URL in the dashboard
+      - key: WIFIPOSE_REDIS_URL
+        sync: false   # paste Upstash rediss:// URL
+      - key: WIFIPOSE_LLM_PROVIDER
+        value: gemini
+      - key: WIFIPOSE_LLM_API_KEY
+        sync: false   # paste Gemini key

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (with ml extras for export + parity tests)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,ml]"
+      - name: Lint
+        run: ruff check src tests
+      - name: Build demo checkpoint + export ONNX
+        run: |
+          wifipose-checkpoint --epochs 2 --out checkpoints/wifipose.pth
+          wifipose-export --checkpoint checkpoints/wifipose.pth --out checkpoints/wifipose.onnx
+      - name: Tests
+        run: pytest -q
+      - name: Benchmark (smoke)
+        run: wifipose-benchmark --checkpoint checkpoints/wifipose.pth --onnx checkpoints/wifipose.onnx --iters 20
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build runtime image
+        run: docker build -t wifipose:ci .

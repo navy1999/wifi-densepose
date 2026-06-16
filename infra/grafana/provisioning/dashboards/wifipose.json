@@ -1,0 +1,57 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "schemaVersion": 39,
+  "title": "WiFi Pose Platform",
+  "tags": ["wifipose"],
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Inference rate (req/s) by action",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum by (action) (rate(wifipose_inferences_total[1m]))", "legendFormat": "{{action}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Inference latency p95 (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(wifipose_inference_latency_ms_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.50, sum(rate(wifipose_inference_latency_ms_bucket[5m])) by (le))", "legendFormat": "p50" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Cache hit ratio",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit" } },
+      "targets": [
+        { "expr": "sum(rate(wifipose_cache_hits_total[5m])) / clamp_min(sum(rate(wifipose_cache_hits_total[5m])) + sum(rate(wifipose_cache_misses_total[5m])), 1)" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active WS connections",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 8 },
+      "targets": [{ "expr": "wifipose_ws_connections" }]
+    },
+    {
+      "type": "stat",
+      "title": "Events persisted",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+      "targets": [{ "expr": "wifipose_events_persisted_total" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM queries by provider",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
+      "targets": [
+        { "expr": "sum by (provider) (rate(wifipose_llm_queries_total[5m]))", "legendFormat": "{{provider}}" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wifipose"
+version = "0.1.0"
+description = "WiFi CSI -> human pose & action intelligence platform (camera-free sensing, production ML serving)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Navneet" }]
+keywords = ["wifi-sensing", "csi", "pose-estimation", "ml-serving", "onnx", "fastapi", "timescaledb"]
+
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "numpy>=1.26",
+    "onnxruntime>=1.17",
+    "redis>=5.0",
+    "sqlalchemy>=2.0",
+    "asyncpg>=0.29",
+    "greenlet>=3.0",
+    "httpx>=0.27",
+    "prometheus-client>=0.20",
+    "structlog>=24.1",
+    "tenacity>=8.2",
+]
+
+[project.optional-dependencies]
+# Heavy: only needed to (re)train or (re)export the model. Serving uses onnxruntime only.
+ml = [
+    "torch>=2.2",
+    "onnx>=1.16",
+    "onnxscript>=0.1",
+    "h5py>=3.10",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "kagglehub>=0.2",
+    "matplotlib>=3.8",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+    "mypy>=1.9",
+    "aiosqlite>=0.20",
+]
+
+[project.scripts]
+wifipose-export = "wifipose.ml.export:main"
+wifipose-benchmark = "wifipose.ml.benchmark:main"
+wifipose-train = "wifipose.ml.train:main"
+wifipose-checkpoint = "wifipose.ml.train:make_demo_checkpoint_cli"
+wifipose-produce = "wifipose.ingest.producer:main"
+wifipose-consume = "wifipose.worker.consumer:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
+# B008: FastAPI's Depends() in argument defaults is the framework's intended idiom.
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+plugins = []

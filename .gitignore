@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Models / data (regenerated via scripts)
+*.pth
+*.onnx
+checkpoints/*.pth
+checkpoints/*.onnx
+data/
+!.gitkeep
+
+# Notebook scratch
+.ipynb_checkpoints/
+nb_*.txt
+
+# Env / secrets
+.env
+.env.local
+*.local
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Infra
+grafana-data/
+prometheus-data/
