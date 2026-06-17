@@ -1,8 +1,8 @@
 """Concrete LLM providers behind a single interface.
 
 Free-tier first:
-    - gemini   Google Gemini (Flash) — generous free tier, default cloud choice
-    - groq     Groq (Llama 3.x) — free, very low latency
+    - groq     Groq (Llama 3.x) — free, very low latency — recommended cloud choice
+    - gemini   Google Gemini (Flash) — generous free tier, drop-in alternative
     - offline  no network, deterministic — default; powers CI & the live demo
 Drop-in paid options (same interface):
     - anthropic / openai
@@ -20,8 +20,8 @@ from wifipose.logging_config import get_logger
 log = get_logger("llm")
 
 _DEFAULT_MODELS = {
-    "gemini": "gemini-2.0-flash",
     "groq": "llama-3.3-70b-versatile",
+    "gemini": "gemini-2.0-flash",
     "anthropic": "claude-haiku-4-5-20251001",
     "openai": "gpt-4o-mini",
 }

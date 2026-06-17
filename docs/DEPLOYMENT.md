@@ -8,7 +8,7 @@ deployed app works the moment it boots.
 ```
 Railway (Docker: API)  ──►  Supabase (Postgres + pgvector)
                        └──►  Upstash (Redis, serverless)
-                       └──►  Gemini API (free tier)  [optional]
+                       └──►  Groq API (free tier)  [optional]
 ```
 
 > Everything below also works with **Render** (use [`render.yaml`](../render.yaml))
@@ -36,14 +36,15 @@ Railway (Docker: API)  ──►  Supabase (Postgres + pgvector)
 2. Copy the **Redis URL** (TLS): `rediss://default:[TOKEN]@xxxx.upstash.io:6379`.
    This is your `WIFIPOSE_REDIS_URL`.
 
-## 3. LLM key — Google Gemini (free, optional)
+## 3. LLM key — Groq (free, optional)
 
-1. Get a key at aistudio.google.com/apikey (free tier: ~1,500 requests/day on Flash).
-2. Set `WIFIPOSE_LLM_PROVIDER=gemini` and `WIFIPOSE_LLM_API_KEY=[KEY]`.
+1. Get a key at console.groq.com/keys (free dev tier, no credit card; serves
+   Llama 3.x at very low latency).
+2. Set `WIFIPOSE_LLM_PROVIDER=groq` and `WIFIPOSE_LLM_API_KEY=[KEY]`.
 
 > Skip this entirely and leave `WIFIPOSE_LLM_PROVIDER=offline` — NL→SQL and
-> summaries still work via the deterministic fallback. Groq is an alternative
-> free key (`WIFIPOSE_LLM_PROVIDER=groq`).
+> summaries still work via the deterministic fallback. Gemini is also supported
+> as a drop-in (`WIFIPOSE_LLM_PROVIDER=gemini`).
 
 ## 4. Deploy on Railway
 
@@ -57,8 +58,8 @@ Railway (Docker: API)  ──►  Supabase (Postgres + pgvector)
    |---|---|
    | `WIFIPOSE_DATABASE_URL` | the Supabase async URI from step 1 |
    | `WIFIPOSE_REDIS_URL` | the Upstash URL from step 2 |
-   | `WIFIPOSE_LLM_PROVIDER` | `gemini` (or `offline`) |
-   | `WIFIPOSE_LLM_API_KEY` | your Gemini key (omit if offline) |
+   | `WIFIPOSE_LLM_PROVIDER` | `groq` (or `offline`) |
+   | `WIFIPOSE_LLM_API_KEY` | your Groq key (omit if offline) |
    | `WIFIPOSE_ENV` | `production` |
    | `WIFIPOSE_LOG_JSON` | `true` |
 
@@ -102,7 +103,7 @@ URL (and set `WIFIPOSE_CORS_ORIGINS` to include the frontend origin).
 |---|---|---|
 | Supabase | 500 MB, pauses after 7 days idle | events are small JSON rows; `seed_demo` is modest |
 | Upstash | 10k cmds/day | cache TTL + stream `MAXLEN` cap usage; offline demo needs no Redis |
-| Gemini | ~1,500 req/day | offline fallback for everything; LLM only on explicit queries |
+| Groq | free dev tier, per-minute/day rate limits | offline fallback for everything; LLM only on explicit queries |
 | Railway | trial credit, then hobby | DB/Redis offloaded; single small CPU service |
 | Render (alt) | web service sleeps when idle | fast cold start (no torch in runtime image) |
 

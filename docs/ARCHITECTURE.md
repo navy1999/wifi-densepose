@@ -81,7 +81,7 @@ keeps the same query surface honest for the LLM text-to-SQL feature.
 ## 5. LLM layer (useful, swappable, and safe)
 
 `LLMProvider` is a one-method interface ([`base.py`](../src/wifipose/llm/base.py))
-with implementations for **Gemini, Groq, OpenAI, Anthropic**, and an
+with implementations for **Groq, Gemini, OpenAI, Anthropic**, and an
 **OfflineProvider**. `get_provider()` selects via config and **falls back to
 offline** on any misconfiguration, so the app never hard-fails on a bad key.
 

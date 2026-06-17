@@ -45,7 +45,7 @@ It also runs **identically** on local Docker (TimescaleDB + Redis + Grafana) and
                          │   │  hypertable pose_events · ANN pose search│ │
                          │   └─────────────────┬──────────────────────┘  │
                          │   LLM layer ────────┘  NL→SQL · summaries      │
-                         │   (Gemini / Groq / offline)                   │
+                         │   (Groq / Gemini / offline)                   │
                          └───────────────┬──────────────────────────────┘
                                          │ /metrics
                                   Prometheus → Grafana
@@ -137,7 +137,7 @@ curl -X POST localhost:8000/api/v1/query -H "content-type: application/json" \
 
 Safety is enforced regardless of what the LLM emits: single statement, `SELECT`/`WITH` only, table allowlist, no comments, forced `LIMIT`, executed in a `READ ONLY` transaction with a statement timeout. See [`nl_to_sql.py`](src/wifipose/llm/nl_to_sql.py) and its [tests](tests/test_nl_to_sql.py).
 
-With **no API key**, a deterministic rule-based generator handles the common intents. Set `WIFIPOSE_LLM_PROVIDER=gemini` (free tier) + `WIFIPOSE_LLM_API_KEY=...` to use a real LLM for arbitrary questions.
+With **no API key**, a deterministic rule-based generator handles the common intents. Set `WIFIPOSE_LLM_PROVIDER=groq` (free tier) + `WIFIPOSE_LLM_API_KEY=...` to use a real LLM for arbitrary questions.
 
 ---
 
@@ -166,7 +166,7 @@ With **no API key**, a deterministic rule-based generator handles the common int
 | Streaming | **Redis Streams** consumer groups | Upstash (serverless) |
 | Database | **TimescaleDB** → degrades to plain **Postgres** | Supabase / Neon |
 | Vector search | **pgvector** → cosine fallback | Supabase / Neon |
-| LLM | provider-agnostic: **Gemini / Groq / offline** | Gemini free tier |
+| LLM | provider-agnostic: **Groq / Gemini / offline** | Groq free tier |
 | Observability | **Prometheus + Grafana** | local / Grafana Cloud |
 | Frontend | **React + Vite + Canvas** | served by FastAPI / Vercel |
 | CI | **GitHub Actions** (lint, tests, ONNX parity, Docker) | free |
@@ -194,7 +194,7 @@ docs/         ARCHITECTURE.md · DEPLOYMENT.md
 
 ## Deploy it (free tier)
 
-Step-by-step for **Supabase + Upstash + Gemini + Railway** in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. Short version: create the three free accounts, paste three connection strings as env vars, `git push` to Railway. The model is baked into the image, so the deployed demo works immediately.
+Step-by-step for **Supabase + Upstash + Groq + Railway** in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. Short version: create the three free accounts, paste three connection strings as env vars, `git push` to Railway. The model is baked into the image, so the deployed demo works immediately.
 
 ---
 

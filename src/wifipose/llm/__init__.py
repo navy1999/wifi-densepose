@@ -1,7 +1,7 @@
 """LLM analytics layer.
 
 Provider-agnostic interface (`LLMProvider`) with free-tier implementations
-(Google Gemini, Groq) plus a zero-dependency `OfflineProvider` so the platform —
+(Groq, Google Gemini) plus a zero-dependency `OfflineProvider` so the platform —
 and CI, and the live demo — works with no API key at all. Anthropic Claude and
 OpenAI drop in behind the same interface via one env var.
 

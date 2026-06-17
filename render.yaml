@@ -16,6 +16,6 @@ services:
       - key: WIFIPOSE_REDIS_URL
         sync: false   # paste Upstash rediss:// URL
       - key: WIFIPOSE_LLM_PROVIDER
-        value: gemini
+        value: groq
       - key: WIFIPOSE_LLM_API_KEY
-        sync: false   # paste Gemini key
+        sync: false   # paste Groq key (console.groq.com/keys)
