@@ -55,6 +55,24 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "http://localhost:5173,http://localhost:8000"
 
+    @field_validator("database_url")
+    @classmethod
+    def _coerce_async_driver(cls, v: str) -> str:
+        """Coerce a plain Postgres URL to the asyncpg driver this app uses.
+
+        Managed providers (Supabase/Neon/Heroku/Railway) hand out `postgres://`
+        or `postgresql://` URLs, which SQLAlchemy maps to the *synchronous*
+        psycopg2 driver (not installed here). Rewriting the scheme makes the app
+        accept whatever the dashboard gives you, with no manual edit."""
+        for prefix in ("postgresql+asyncpg://", "postgresql+psycopg://"):
+            if v.startswith(prefix):
+                return v
+        if v.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + v[len("postgresql://") :]
+        if v.startswith("postgres://"):
+            return "postgresql+asyncpg://" + v[len("postgres://") :]
+        return v
+
     @field_validator("cors_origins")
     @classmethod
     def _split_origins(cls, v: str) -> str:
