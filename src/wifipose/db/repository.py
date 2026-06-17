@@ -44,13 +44,16 @@ class PoseRepository:
             "ts, subject_id, action_index, action, confidence, action_probs, "
             "uv_coords, embedding, latency_ms, source"
         )
+        # Use CAST(:p AS t) rather than :p::t — SQLAlchemy text() does not bind a
+        # param that is immediately followed by the `::` cast operator.
         vals = (
             f"{ts_expr}, :subject_id, :action_index, :action, :confidence, "
-            ":action_probs::jsonb, :uv_coords::jsonb, :embedding, :latency_ms, :source"
+            "CAST(:action_probs AS jsonb), CAST(:uv_coords AS jsonb), "
+            ":embedding, :latency_ms, :source"
         )
         if caps.pgvector:
             cols += ", embedding_vec"
-            vals += ", :embedding_vec::vector"
+            vals += ", CAST(:embedding_vec AS vector)"
             params["embedding_vec"] = "[" + ",".join(str(x) for x in event.embedding) + "]"
 
         sql = text(
@@ -131,9 +134,9 @@ class PoseRepository:
         sql = text(
             "SELECT id, ts, subject_id, action_index, action, confidence, action_probs, "
             "uv_coords, latency_ms, source, "
-            "1 - (embedding_vec <=> :qv::vector) AS similarity "
+            "1 - (embedding_vec <=> CAST(:qv AS vector)) AS similarity "
             "FROM pose_events WHERE embedding_vec IS NOT NULL "
-            "ORDER BY embedding_vec <=> :qv::vector LIMIT :k"
+            "ORDER BY embedding_vec <=> CAST(:qv AS vector) LIMIT :k"
         )
         async with self._sm() as session:
             rows = (await session.execute(sql, {"qv": qv, "k": k})).mappings().all()
