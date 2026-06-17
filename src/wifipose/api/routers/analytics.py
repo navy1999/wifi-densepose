@@ -60,7 +60,15 @@ async def activity_summary(
     llm=Depends(get_llm),
 ):
     """LLM (or deterministic) natural-language briefing of recent activity."""
-    events = await repo.recent_events(limit=limit)
+    try:
+        events = await repo.recent_events(limit=limit)
+    except Exception as e:  # noqa: BLE001 - DB unreachable should not 500 the demo
+        return {
+            "summary": "Activity data is temporarily unavailable (database not reachable).",
+            "provider": "unavailable",
+            "stats": {},
+            "error": str(e),
+        }
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
     windowed = [e for e in events if e.ts >= cutoff]
     return await summarize_activity(windowed, llm)

@@ -176,9 +176,15 @@ async def generate_sql(question: str, provider: LLMProvider) -> SQLGeneration:
     if provider.is_offline:
         raw, prov = rule_based_sql(question), "offline"
     else:
-        prompt = f"{SCHEMA_DESCRIPTION}\n\nQuestion: {question}\n\nSQL:"
-        result = await provider.complete(prompt, system=_LLM_SYSTEM, temperature=0.0, max_tokens=300)
-        raw, prov = result.text, result.provider
+        try:
+            prompt = f"{SCHEMA_DESCRIPTION}\n\nQuestion: {question}\n\nSQL:"
+            result = await provider.complete(
+                prompt, system=_LLM_SYSTEM, temperature=0.0, max_tokens=300
+            )
+            raw, prov = result.text, result.provider
+        except Exception:  # noqa: BLE001 - LLM down (bad key, rate limit, network)
+            # Degrade to the deterministic generator instead of failing the request.
+            raw, prov = rule_based_sql(question), "offline-fallback"
 
     try:
         safe = validate_select(raw)
