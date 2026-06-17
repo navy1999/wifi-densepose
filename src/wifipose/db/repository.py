@@ -28,6 +28,7 @@ class PoseRepository:
     async def insert_event(self, event: PoseEventIn) -> PoseEventOut:
         caps = capabilities()
         params: dict[str, Any] = {
+            "device_id": event.device_id,
             "subject_id": event.subject_id,
             "action_index": event.action_index,
             "action": event.action,
@@ -41,13 +42,13 @@ class PoseRepository:
         }
         ts_expr = "COALESCE(:ts, now())"
         cols = (
-            "ts, subject_id, action_index, action, confidence, action_probs, "
+            "ts, device_id, subject_id, action_index, action, confidence, action_probs, "
             "uv_coords, embedding, latency_ms, source"
         )
         # Use CAST(:p AS t) rather than :p::t — SQLAlchemy text() does not bind a
         # param that is immediately followed by the `::` cast operator.
         vals = (
-            f"{ts_expr}, :subject_id, :action_index, :action, :confidence, "
+            f"{ts_expr}, :device_id, :subject_id, :action_index, :action, :confidence, "
             "CAST(:action_probs AS jsonb), CAST(:uv_coords AS jsonb), "
             ":embedding, :latency_ms, :source"
         )
@@ -58,7 +59,7 @@ class PoseRepository:
 
         sql = text(
             f"INSERT INTO pose_events ({cols}) VALUES ({vals}) "
-            "RETURNING id, ts, subject_id, action_index, action, confidence, "
+            "RETURNING id, ts, device_id, subject_id, action_index, action, confidence, "
             "action_probs, uv_coords, latency_ms, source"
         )
         async with self._sm() as session:
@@ -68,7 +69,11 @@ class PoseRepository:
 
     # ── reads ─────────────────────────────────────────────────────────────
     async def recent_events(
-        self, limit: int = 50, action: str | None = None, subject_id: str | None = None
+        self,
+        limit: int = 50,
+        action: str | None = None,
+        subject_id: str | None = None,
+        device_id: str | None = None,
     ) -> list[PoseEventOut]:
         clauses, params = [], {"limit": limit}
         if action:
@@ -77,9 +82,12 @@ class PoseRepository:
         if subject_id:
             clauses.append("subject_id = :subject_id")
             params["subject_id"] = subject_id
+        if device_id:
+            clauses.append("device_id = :device_id")
+            params["device_id"] = device_id
         where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
         sql = text(
-            "SELECT id, ts, subject_id, action_index, action, confidence, action_probs, "
+            "SELECT id, ts, device_id, subject_id, action_index, action, confidence, action_probs, "
             f"uv_coords, latency_ms, source FROM pose_events {where} ORDER BY ts DESC LIMIT :limit"
         )
         async with self._sm() as session:
@@ -132,7 +140,7 @@ class PoseRepository:
     async def _find_similar_pgvector(self, embedding: list[float], k: int) -> list[SimilarPose]:
         qv = "[" + ",".join(str(x) for x in embedding) + "]"
         sql = text(
-            "SELECT id, ts, subject_id, action_index, action, confidence, action_probs, "
+            "SELECT id, ts, device_id, subject_id, action_index, action, confidence, action_probs, "
             "uv_coords, latency_ms, source, "
             "1 - (embedding_vec <=> CAST(:qv AS vector)) AS similarity "
             "FROM pose_events WHERE embedding_vec IS NOT NULL "
@@ -144,7 +152,7 @@ class PoseRepository:
 
     async def _find_similar_python(self, embedding: list[float], k: int) -> list[SimilarPose]:
         sql = text(
-            "SELECT id, ts, subject_id, action_index, action, confidence, action_probs, "
+            "SELECT id, ts, device_id, subject_id, action_index, action, confidence, action_probs, "
             "uv_coords, latency_ms, source, embedding FROM pose_events ORDER BY ts DESC LIMIT 500"
         )
         async with self._sm() as session:
@@ -170,11 +178,59 @@ class PoseRepository:
         return [dict(r) for r in rows[:max_rows]]
 
 
+class DeviceRepository:
+    """CRUD for registered capture devices. API keys are stored hashed."""
+
+    def __init__(self, sessionmaker=None):
+        self._sm = sessionmaker or get_sessionmaker()
+
+    async def create_device(
+        self, device_id: str, name: str, owner: str, csi_format: str, api_key_hash: str
+    ) -> dict[str, Any]:
+        sql = text(
+            "INSERT INTO devices (id, name, owner, api_key_hash, csi_format) "
+            "VALUES (:id, :name, :owner, :api_key_hash, :csi_format) "
+            "RETURNING id, name, owner, csi_format, created_at, last_seen"
+        )
+        async with self._sm() as session:
+            row = (
+                await session.execute(
+                    sql,
+                    {
+                        "id": device_id,
+                        "name": name,
+                        "owner": owner,
+                        "api_key_hash": api_key_hash,
+                        "csi_format": csi_format,
+                    },
+                )
+            ).mappings().one()
+            await session.commit()
+        return dict(row)
+
+    async def get_by_key_hash(self, api_key_hash: str) -> dict[str, Any] | None:
+        sql = text(
+            "SELECT id, name, owner, csi_format, created_at, last_seen "
+            "FROM devices WHERE api_key_hash = :h"
+        )
+        async with self._sm() as session:
+            row = (await session.execute(sql, {"h": api_key_hash})).mappings().first()
+        return dict(row) if row else None
+
+    async def touch_last_seen(self, device_id: str) -> None:
+        async with self._sm() as session:
+            await session.execute(
+                text("UPDATE devices SET last_seen = now() WHERE id = :id"), {"id": device_id}
+            )
+            await session.commit()
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 def _row_to_event(r) -> PoseEventOut:
     return PoseEventOut(
         id=int(r["id"]),
         ts=r["ts"],
+        device_id=r["device_id"] if "device_id" in r else "demo",
         subject_id=r["subject_id"],
         action_index=int(r["action_index"]),
         action=r["action"],

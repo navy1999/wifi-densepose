@@ -58,8 +58,10 @@ class StreamWorker:
         csi = np.asarray(json.loads(fields["csi"]), dtype=np.float32)
         pred = self.estimator.predict(csi)
         mean_conf = float(np.mean(pred.confidence)) if pred.confidence else 0.0
+        device_id = fields.get("device_id", "demo")
 
         event = PoseEventIn(
+            device_id=device_id,
             subject_id=fields.get("subject_id", "unknown"),
             action_index=pred.action_index,
             action=pred.action_name,
@@ -68,29 +70,30 @@ class StreamWorker:
             uv_coords=pred.uv_coords,
             embedding=PoseEventIn.embedding_from_uv(pred.uv_coords),
             latency_ms=pred.latency_ms,
-            source="stream",
+            source=fields.get("source", "stream"),
         )
         try:
             await self.repo.insert_event(event)
         except Exception as e:  # noqa: BLE001 - keep consuming even if DB is down
             log.warning("persist_failed", error=str(e))
 
-        # Fan out to live WebSocket subscribers.
-        await self.redis.publish(
-            PREDICTIONS_CHANNEL,
-            json.dumps(
-                {
-                    "subject_id": event.subject_id,
-                    "uv_coords": pred.uv_coords,
-                    "confidence": pred.confidence,
-                    "action": pred.action_name,
-                    "action_probs": pred.action_probs,
-                    "ground_truth_action": fields.get("ground_truth"),
-                    "latency_ms": pred.latency_ms,
-                    "frame": int(fields.get("frame", 0)),
-                }
-            ),
+        # Fan out to live WebSocket subscribers: a global channel (demo viewer)
+        # and a per-device channel so a user sees only their own device's stream.
+        message = json.dumps(
+            {
+                "device_id": device_id,
+                "subject_id": event.subject_id,
+                "uv_coords": pred.uv_coords,
+                "confidence": pred.confidence,
+                "action": pred.action_name,
+                "action_probs": pred.action_probs,
+                "ground_truth_action": fields.get("ground_truth"),
+                "latency_ms": pred.latency_ms,
+                "frame": int(fields.get("frame", 0)),
+            }
         )
+        await self.redis.publish(PREDICTIONS_CHANNEL, message)
+        await self.redis.publish(f"{PREDICTIONS_CHANNEL}:{device_id}", message)
 
     async def run(self, batch: int = 10, block_ms: int = 5000) -> None:
         try:

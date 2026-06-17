@@ -12,6 +12,7 @@ from wifipose import NUM_PARTS
 class PoseEventIn(BaseModel):
     """A single inference result ready to persist."""
 
+    device_id: str = "demo"
     subject_id: str
     action_index: int
     action: str
@@ -36,6 +37,7 @@ class PoseEventIn(BaseModel):
 class PoseEventOut(BaseModel):
     id: int
     ts: datetime
+    device_id: str = "demo"
     subject_id: str
     action_index: int
     action: str
@@ -54,3 +56,25 @@ class ActionBucket(BaseModel):
     bucket: datetime
     action: str
     count: int
+
+
+# ── Devices (Phase 2: live CSI ingestion) ────────────────────────────────────
+class DeviceRegisterRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=64)
+    owner: str = "anonymous"
+    csi_format: str = "complex_interleaved"
+
+
+class Device(BaseModel):
+    id: str
+    name: str
+    owner: str
+    csi_format: str
+    created_at: datetime
+    last_seen: datetime | None = None
+
+
+class DeviceCredentials(Device):
+    """Returned ONCE at registration — includes the plaintext API key."""
+
+    api_key: str

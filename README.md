@@ -153,6 +153,9 @@ With **no API key**, a deterministic rule-based generator handles the common int
 | `GET` | `/api/v1/similar/{event_id}` | Nearest-neighbour pose search (pgvector / cosine) |
 | `GET` | `/api/v1/summary` | LLM activity briefing |
 | `POST` | `/api/v1/query` | Natural-language → SQL analytics |
+| `POST` | `/api/v1/devices` | Register a capture device → API key (shown once) |
+| `POST` | `/api/v1/ingest/window` | Ingest a CSI window from a device (`X-API-Key`) |
+| `WS` | `/api/v1/ingest/stream` | Continuous CSI ingestion (`?api_key=`) |
 | `GET` | `/health` · `/ready` · `/metrics` | Ops endpoints |
 
 ---
@@ -191,6 +194,28 @@ docs/         ARCHITECTURE.md · DEPLOYMENT.md
 ```
 
 ---
+
+## Bring your own CSI device (Phase 2)
+
+Stream **live CSI from real hardware** to the platform. Stock routers can't expose
+CSI, so capture needs a supported device — an **ESP32** (~$5, `esp-csi`), a
+Raspberry Pi / Broadcom router via **Nexmon**, or an **Intel 5300** NIC. A
+reference agent does edge windowing and streams to an authenticated, per-device
+ingestion endpoint; the server normalizes any CSI format into the model's
+`[30,104]` contract, classifies it, and fans results out over per-device
+WebSockets.
+
+```bash
+pip install "wifipose[agent]"
+wifipose-agent register --server https://<your-app> --name my-esp32       # -> API key
+wifipose-agent stream   --server https://<your-app> --api-key wfp_xxx --source synthetic
+#                                                                        --source esp32 --port /dev/ttyUSB0
+```
+
+No hardware? The `synthetic` source exercises the entire capture→classify→store
+pipeline. Full hardware setup, wire format, and the **honest accuracy caveat**
+(the deployed model is trained on synthetic CSI — real-signal accuracy needs
+retraining) are in **[docs/CAPTURE.md](docs/CAPTURE.md)**.
 
 ## Deploy it (free tier)
 

@@ -91,5 +91,15 @@ th { color: var(--muted); font-weight: 600; }
 
 .summary { line-height: 1.5; }
 
+.device-format {
+  margin-top: 8px; width: 100%; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: #0a0f1d; color: var(--text);
+}
+.agent-cmd {
+  background: #0a0f1d; border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px; font-size: 0.72rem; color: #7dd3fc; overflow-x: auto;
+  white-space: pre; line-height: 1.45;
+}
+
 footer { margin-top: 28px; font-size: 0.8rem; text-align: center; }
 footer a { color: var(--accent); }

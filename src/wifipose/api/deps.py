@@ -11,7 +11,7 @@ from functools import lru_cache
 from fastapi import HTTPException
 
 from wifipose.config import get_settings
-from wifipose.db.repository import PoseRepository
+from wifipose.db.repository import DeviceRepository, PoseRepository
 from wifipose.llm.base import LLMProvider
 from wifipose.llm.providers import get_provider
 from wifipose.logging_config import get_logger
@@ -52,6 +52,11 @@ def estimator_ready() -> bool:
 @lru_cache
 def get_repository() -> PoseRepository:
     return PoseRepository()
+
+
+@lru_cache
+def get_device_repository() -> DeviceRepository:
+    return DeviceRepository()
 
 
 def get_llm() -> LLMProvider:

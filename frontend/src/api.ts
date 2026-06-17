@@ -54,3 +54,20 @@ export async function getHistogram(hours = 24): Promise<{ counts: Record<string,
   const resp = await fetch(`/api/v1/stats/histogram?hours=${hours}`);
   return resp.json();
 }
+
+export interface DeviceCredentials {
+  id: string;
+  name: string;
+  csi_format: string;
+  api_key: string;
+}
+
+export async function registerDevice(name: string, csi_format: string): Promise<DeviceCredentials> {
+  const resp = await fetch("/api/v1/devices", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, csi_format }),
+  });
+  if (!resp.ok) throw new Error(`Registration failed (${resp.status}). Is the database connected?`);
+  return resp.json();
+}

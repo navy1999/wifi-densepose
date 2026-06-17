@@ -28,13 +28,15 @@ PREDICTIONS_CHANNEL = "predictions"
 
 
 @router.websocket("/api/v1/ws")
-async def pose_stream(ws: WebSocket, mode: str = "sim", rate_hz: float | None = None) -> None:
+async def pose_stream(
+    ws: WebSocket, mode: str = "sim", rate_hz: float | None = None, device: str | None = None
+) -> None:
     await ws.accept()
     WS_CONNECTIONS.inc()
     settings = get_settings()
     try:
         if mode == "live":
-            await _stream_from_redis(ws)
+            await _stream_from_redis(ws, device)
         else:
             await _stream_simulated(ws, rate_hz or settings.producer_rate_hz)
     except WebSocketDisconnect:
@@ -79,10 +81,12 @@ async def _stream_simulated(ws: WebSocket, rate_hz: float) -> None:
         await asyncio.sleep(interval)
 
 
-async def _stream_from_redis(ws: WebSocket) -> None:
+async def _stream_from_redis(ws: WebSocket, device: str | None = None) -> None:
+    # Subscribe to one device's channel, or the global channel for all devices.
+    channel = f"{PREDICTIONS_CHANNEL}:{device}" if device else PREDICTIONS_CHANNEL
     redis = get_redis()
     pubsub = redis.pubsub()
-    await pubsub.subscribe(PREDICTIONS_CHANNEL)
+    await pubsub.subscribe(channel)
     try:
         async for message in pubsub.listen():
             if message.get("type") != "message":
@@ -90,7 +94,7 @@ async def _stream_from_redis(ws: WebSocket) -> None:
             data = message["data"]
             await ws.send_text(data if isinstance(data, str) else json.dumps(data))
     finally:
-        await pubsub.unsubscribe(PREDICTIONS_CHANNEL)
+        await pubsub.unsubscribe(channel)
         await pubsub.aclose()
 
 

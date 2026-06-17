@@ -48,6 +48,10 @@ dev = [
     "mypy>=1.9",
     "aiosqlite>=0.20",
 ]
+# Capture agent on the user's device. pyserial only needed for the ESP32 source.
+agent = [
+    "pyserial>=3.5",
+]
 
 [project.scripts]
 wifipose-export = "wifipose.ml.export:main"
@@ -56,6 +60,7 @@ wifipose-train = "wifipose.ml.train:main"
 wifipose-checkpoint = "wifipose.ml.train:make_demo_checkpoint_cli"
 wifipose-produce = "wifipose.ingest.producer:main"
 wifipose-consume = "wifipose.worker.consumer:main"
+wifipose-agent = "wifipose.agent.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

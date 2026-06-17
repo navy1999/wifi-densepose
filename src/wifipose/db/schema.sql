@@ -25,6 +25,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS pose_events (
     ts           TIMESTAMPTZ      NOT NULL DEFAULT now(),
     id           BIGINT GENERATED ALWAYS AS IDENTITY,
+    device_id    TEXT             NOT NULL DEFAULT 'demo',
     subject_id   TEXT             NOT NULL,
     action_index SMALLINT         NOT NULL,
     action       TEXT             NOT NULL,
@@ -35,6 +36,23 @@ CREATE TABLE IF NOT EXISTS pose_events (
     latency_ms   REAL             NOT NULL,
     source       TEXT             NOT NULL DEFAULT 'stream',
     PRIMARY KEY (ts, id)
+);
+
+-- @@STATEMENT@@
+-- device_id added in Phase 2; backfill-safe for tables created before then.
+ALTER TABLE pose_events ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT 'demo';
+
+-- @@STATEMENT@@
+-- Registered capture devices (one per user's ESP32 / Pi / NIC). The API key is
+-- stored only as a SHA-256 hash; the plaintext is shown once at registration.
+CREATE TABLE IF NOT EXISTS devices (
+    id            TEXT        PRIMARY KEY,
+    name          TEXT        NOT NULL,
+    owner         TEXT        NOT NULL DEFAULT 'anonymous',
+    api_key_hash  TEXT        NOT NULL UNIQUE,
+    csi_format    TEXT        NOT NULL DEFAULT 'complex_interleaved',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_seen     TIMESTAMPTZ
 );
 
 -- @@STATEMENT@@
@@ -56,6 +74,9 @@ CREATE INDEX IF NOT EXISTS pose_events_action_ts ON pose_events (action, ts DESC
 
 -- @@STATEMENT@@
 CREATE INDEX IF NOT EXISTS pose_events_subject_ts ON pose_events (subject_id, ts DESC);
+
+-- @@STATEMENT@@
+CREATE INDEX IF NOT EXISTS pose_events_device_ts ON pose_events (device_id, ts DESC);
 
 -- @@STATEMENT@@
 -- When pgvector exists, add a typed vector column + ANN index for fast

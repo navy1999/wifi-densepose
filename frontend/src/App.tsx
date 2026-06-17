@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SkeletonCanvas } from "./components/SkeletonCanvas";
 import { QueryPanel } from "./components/QueryPanel";
+import { ConnectDevice } from "./components/ConnectDevice";
 import { openPoseStream, getSummary, type PoseFrame } from "./api";
 
 export default function App() {
@@ -68,6 +69,7 @@ export default function App() {
 
         <div className="col">
           <QueryPanel />
+          <ConnectDevice />
           <section className="panel">
             <h2>Activity briefing</h2>
             <p className="summary">{summary || "Run `make seed` to populate activity, then refresh."}</p>

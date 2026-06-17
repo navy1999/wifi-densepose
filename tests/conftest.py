@@ -40,12 +40,14 @@ class FakeRepository:
         self.events.append(out)
         return out
 
-    async def recent_events(self, limit=50, action=None, subject_id=None):
+    async def recent_events(self, limit=50, action=None, subject_id=None, device_id=None):
         rows = list(reversed(self.events))
         if action:
             rows = [e for e in rows if e.action == action]
         if subject_id:
             rows = [e for e in rows if e.subject_id == subject_id]
+        if device_id:
+            rows = [e for e in rows if e.device_id == device_id]
         return rows[:limit]
 
     async def action_histogram(self, since=None):
@@ -62,6 +64,42 @@ class FakeRepository:
 
     async def run_safe_select(self, sql, max_rows=200):
         return [{"sql_echo": sql, "rows": len(self.events)}]
+
+
+class FakeDeviceRepository:
+    """In-memory stand-in for DeviceRepository."""
+
+    def __init__(self):
+        self.by_hash: dict[str, dict] = {}
+
+    async def create_device(self, device_id, name, owner, csi_format, api_key_hash):
+        row = {
+            "id": device_id,
+            "name": name,
+            "owner": owner,
+            "csi_format": csi_format,
+            "created_at": datetime.now(timezone.utc),
+            "last_seen": None,
+        }
+        self.by_hash[api_key_hash] = row
+        return row
+
+    async def get_by_key_hash(self, api_key_hash):
+        return self.by_hash.get(api_key_hash)
+
+    async def touch_last_seen(self, device_id):
+        return None
+
+
+class FakeRedis:
+    """Minimal async Redis stub capturing XADD calls."""
+
+    def __init__(self):
+        self.added: list[tuple] = []
+
+    async def xadd(self, stream, fields, **kwargs):
+        self.added.append((stream, fields))
+        return f"{len(self.added)}-0"
 
 
 @pytest.fixture

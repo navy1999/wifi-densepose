@@ -14,7 +14,7 @@ from starlette.responses import Response
 
 from wifipose import __version__
 from wifipose.api.deps import load_estimator
-from wifipose.api.routers import analytics, health, inference, query, stream
+from wifipose.api.routers import analytics, health, inference, ingest, query, stream
 from wifipose.cache.redis_client import close_redis
 from wifipose.config import get_settings
 from wifipose.db.session import dispose_engine, init_db
@@ -61,7 +61,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    for module in (health, inference, stream, analytics, query):
+    for module in (health, inference, stream, analytics, query, ingest):
         app.include_router(module.router)
 
     @app.get("/metrics", include_in_schema=False)

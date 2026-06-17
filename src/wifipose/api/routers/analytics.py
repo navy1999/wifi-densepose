@@ -18,9 +18,12 @@ async def list_events(
     limit: int = Query(50, ge=1, le=500),
     action: str | None = None,
     subject_id: str | None = None,
+    device_id: str | None = None,
     repo=Depends(get_repository),
 ):
-    return await repo.recent_events(limit=limit, action=action, subject_id=subject_id)
+    return await repo.recent_events(
+        limit=limit, action=action, subject_id=subject_id, device_id=device_id
+    )
 
 
 @router.get("/stats/histogram")
