@@ -200,6 +200,6 @@ Step-by-step for **Supabase + Upstash + Gemini + Railway** in **[docs/DEPLOYMENT
 
 ## Credits & scope
 
-- Inspired by the **"DensePose From WiFi"** research direction (CMU) and the original course notebook included in this repo.
+- Inspired by the **"DensePose From WiFi"** research direction (CMU). The original model was built and trained in Colab — that notebook is preserved at [`notebooks/model-training-colab.ipynb`](notebooks/model-training-colab.ipynb), and [`model.py`](src/wifipose/ml/model.py) is a faithful reproduction of its architecture.
 - Synthetic CSI powers the runnable demo; the real-data training path ([`dataset.py`](src/wifipose/ml/dataset.py), `wifipose-train`) mirrors the notebook against the Kaggle `wifipose-dataset` and `csi-human-in-wifi` datasets.
 - This project is about the **systems engineering around an ML model**, not a novel sensing result.
