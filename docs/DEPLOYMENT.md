@@ -51,7 +51,8 @@ Railway (Docker: API)  ──►  Supabase (Postgres + pgvector)
 1. Push this repo to GitHub.
 2. railway.app → **New Project → Deploy from GitHub repo**. Railway detects the
    [`Dockerfile`](../Dockerfile) (and [`railway.json`](../railway.json), which sets
-   the start command + `/health` healthcheck).
+   the `/health` healthcheck). The container's `CMD` binds uvicorn to Railway's
+   injected `$PORT` via a shell, so no custom start command is needed.
 3. In the service **Variables**, add:
 
    | Variable | Value |
